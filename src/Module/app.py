@@ -17,7 +17,6 @@ class App:
         app_name = "RTB_C10"
         if 'spark' not in globals():
             print('No Spark Session exists in prior')
-            spark = None
         spark_conf = [("spark.sql.shuffle.partitions", "30")]
         self.spark = SparkSession.builder \
             .master("local") \
