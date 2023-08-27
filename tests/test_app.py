@@ -14,4 +14,3 @@ def test_get_top_5_countries():
     expected_list = [('England', 1531), ('Germany', 1038), ('Spain', 990), ('France', 864), ('Argentina', 843)]
     actual_list = df.rdd.map(tuple).collect()
     assert expected_list == actual_list
-

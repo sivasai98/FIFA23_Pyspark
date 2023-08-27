@@ -3,7 +3,7 @@ from src.constants.constants import HEADER, TRUE, DELIMITER, CSV_DELIMITER, INFE
     REM_UN_CHAR1, REM_UN_CHAR2, REM_UN_CHAR3, REM_UN_CHAR4, case_st, NAN, INNER, CNT, FIFA23_OFFICIAL_DATA, \
     FIFA_CLUBS_DATA
 from src.entity.fifa23_official_data import FOD, FC
-from src.spark_commons import get_spark_session
+from src.commons.spark_commons import get_spark_session
 
 
 class App:
