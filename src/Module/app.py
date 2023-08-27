@@ -14,7 +14,7 @@ class App:
 
     def __enter__(self):
         """ creating Spark Session"""
-        app_name = f"RTB_C10"
+        app_name = "RTB_C10"
         if 'spark' not in globals():
             print('No Spark Session exists in prior')
             spark = None
@@ -84,7 +84,7 @@ class App:
             .orderBy(col(FOD.NUMBER_OF_PLAYERS_ON_LOAN).desc())
         df5.show(5, False)
 
-        # get top 5 countries which are having highest number of clubs
+        # get top 5 countries which are having the highest number of clubs
         df6 = df1.join(fifa_clubs_df, [FOD.CLUB], INNER).select(FOD.CLUB, FC.COUNTRY) \
             .groupBy(FC.COUNTRY) \
             .agg(count(FOD.CLUB).alias(CNT)).orderBy(col(CNT).desc()).limit(5)
