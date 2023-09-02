@@ -1,3 +1,6 @@
+import os
+import sys
+
 from pyspark.sql.functions import col, regexp_replace, expr, count
 from src.constants.constants import HEADER, TRUE, DELIMITER, CSV_DELIMITER, INFERSCHEMA, CSV, empty_string, \
     REM_UN_CHAR1, REM_UN_CHAR2, REM_UN_CHAR3, REM_UN_CHAR4, case_st, NAN, INNER, CNT, FIFA23_OFFICIAL_DATA, \
@@ -6,6 +9,10 @@ from src.entity.fifa23_official_data import FOD, FC
 from src.commons.spark_commons import get_spark_session
 
 
+# os.environ['SPARK_HOME'] = "/home/siva/hadoop/spark"
+# os.environ['HADOOP_HOME'] = "/home/siva/hadoop/hadoop-3.3.0"
+# sys.path.append("/home/siva/hadoop/spark/python")
+# sys.path.append("/home/siva/hadoop/spark/python/lib")
 class App:
     def __init__(self):
         print("Init Method")
@@ -21,7 +28,6 @@ class App:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """ closing the spark context!"""
-        self.spark.stop()
         print("spark session closed!!!")
 
     def read_csv(self, path):
@@ -34,23 +40,41 @@ class App:
 
     @staticmethod
     def data_cleaning(df1, fifa_clubs_df):
-        drop_columns = [FOD.PHOTO, FOD.FLAG, FOD.CLUB_LOGO, FOD.BEST_OVER_ALL_RATING]
-        df1 = df1.drop(*drop_columns) \
-            .withColumn(FOD.VALUE, regexp_replace(FOD.VALUE, REM_UN_CHAR1, empty_string)) \
-            .withColumn(FOD.WAGE, regexp_replace(FOD.WAGE, REM_UN_CHAR1, empty_string)) \
-            .withColumn(FOD.POSITION, regexp_replace(FOD.POSITION, REM_UN_CHAR2, empty_string)) \
-            .withColumn(FOD.LOANED_FROM, regexp_replace(FOD.LOANED_FROM, REM_UN_CHAR3, empty_string))
-        fifa_clubs_df = fifa_clubs_df.withColumn(FC.CLUB, regexp_replace(FC.CLUB, REM_UN_CHAR4, empty_string))
-        return df1, fifa_clubs_df
+        try:
+            drop_columns = [FOD.PHOTO, FOD.FLAG, FOD.CLUB_LOGO, FOD.BEST_OVER_ALL_RATING]
+            df1 = df1.drop(*drop_columns) \
+                .withColumn(FOD.VALUE, regexp_replace(FOD.VALUE, REM_UN_CHAR1, empty_string)) \
+                .withColumn(FOD.WAGE, regexp_replace(FOD.WAGE, REM_UN_CHAR1, empty_string)) \
+                .withColumn(FOD.POSITION, regexp_replace(FOD.POSITION, REM_UN_CHAR2, empty_string)) \
+                .withColumn(FOD.LOANED_FROM, regexp_replace(FOD.LOANED_FROM, REM_UN_CHAR3, empty_string))
+            fifa_clubs_df = fifa_clubs_df.withColumn(FC.CLUB, regexp_replace(FC.CLUB, REM_UN_CHAR4, empty_string))
+            return df1, fifa_clubs_df
+        except Exception as e:
+            print(f"Error in data cleaning - {e}")
+            raise
 
-    @staticmethod
-    def get_top_5_countries(df):
-        return df.groupBy("Nationality") \
-            .agg(count("Name").alias("count")) \
-            .orderBy(col("count").desc()) \
-            .limit(5)
+    def get_top_5_countries(self, df):
+        try:
+            print(f"In get_top_5_countries == {self.spark.sparkContext.appName}")
+            return df.groupBy("Nationality") \
+                .agg(count("Name").alias("count")) \
+                .orderBy(col("count").desc()) \
+                .limit(5)
+        except Exception as e:
+            print(f"Error in get top 5 countries - {e}")
+            raise
+
+    def get_role(self, df1):
+        print(f"In get_role method ==={self.spark.sparkContext.appName}")
+        try:
+            return df1.withColumn(FOD.ROLE, expr(case_st)) \
+                .select(FOD.NAME, FOD.CLUB, FOD.OVERALL, FOD.NATIONALITY, FOD.AGE, FOD.POSITION, FOD.ROLE)
+        except Exception as e:
+            print(f"Error in get role - {e}")
+            raise
 
     def do(self):
+        print(f"In Do method ==={self.spark.sparkContext.appName}")
         fifa_official = self.read_csv(FIFA23_OFFICIAL_DATA)
         fifa_clubs = self.read_csv(FIFA_CLUBS_DATA)
 
@@ -61,8 +85,7 @@ class App:
         df2.show(truncate=False)
 
         # Added Role('ATTACKER', 'MIDFIELDER', 'DEFENDER', 'GOALKEEPER', 'SUBSTITUTE', 'RESERVE')
-        df3 = df1.withColumn(FOD.ROLE, expr(case_st))\
-            .select(FOD.NAME, FOD.CLUB, FOD.OVERALL, FOD.NATIONALITY, FOD.AGE, FOD.POSITION, FOD.ROLE)
+        df3 = self.get_role(df1)
         df3.show(5, False)
 
         # identify players which are part of two clubs
