@@ -8,11 +8,6 @@ import pyspark
 from pyspark.sql import SparkSession
 import mock
 
-
-# os.environ['SPARK_HOME'] = "/home/siva/hadoop/spark"
-# os.environ['HADOOP_HOME'] = "/home/siva/hadoop/hadoop-3.3.0"
-# sys.path.append("/home/siva/hadoop/spark/python")
-# sys.path.append("/home/siva/hadoop/spark/python/lib")
 @pytest.fixture(scope='session')
 def spark_session():
     spark = SparkSession.builder \

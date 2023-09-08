@@ -9,10 +9,6 @@ from src.entity.fifa23_official_data import FOD, FC
 from src.commons.spark_commons import get_spark_session
 
 
-# os.environ['SPARK_HOME'] = "/home/siva/hadoop/spark"
-# os.environ['HADOOP_HOME'] = "/home/siva/hadoop/hadoop-3.3.0"
-# sys.path.append("/home/siva/hadoop/spark/python")
-# sys.path.append("/home/siva/hadoop/spark/python/lib")
 class App:
     def __init__(self):
         print("Init Method")
@@ -75,31 +71,38 @@ class App:
 
     def do(self):
         print(f"In Do method ==={self.spark.sparkContext.appName}")
+        print("Reading Data !!!")
         fifa_official = self.read_csv(FIFA23_OFFICIAL_DATA)
         fifa_clubs = self.read_csv(FIFA_CLUBS_DATA)
-
+        print("Data Cleaning!!!")
         df1, fifa_clubs_df = self.data_cleaning(fifa_official, fifa_clubs)
-
+        print("Data Cleaning Done !!!")
+        print("Processing Data !!!!")
         # get_top_5_countries
+        print("Top 5 Countries")
         df2 = self.get_top_5_countries(df1)
         df2.show(truncate=False)
 
         # Added Role('ATTACKER', 'MIDFIELDER', 'DEFENDER', 'GOALKEEPER', 'SUBSTITUTE', 'RESERVE')
+        print("get Role('ATTACKER', 'MIDFIELDER', 'DEFENDER', 'GOALKEEPER', 'SUBSTITUTE', 'RESERVE')")
         df3 = self.get_role(df1)
         df3.show(5, False)
 
         # identify players which are part of two clubs
+        print("identify players which are part of two clubs")
         df4 = df1.where(col(FOD.LOANED_FROM) != NAN) \
             .select(FOD.NAME, FOD.LOANED_FROM, FOD.CLUB, FOD.AGE, FOD.NATIONALITY)
         df4.show(5, False)
 
         # find the name of the club which has maximum number of players on loan
+        print("find the name of the club which has maximum number of players on loan")
         df5 = df4.groupBy(FOD.CLUB) \
             .agg(count(FOD.LOANED_FROM).alias(FOD.NUMBER_OF_PLAYERS_ON_LOAN)) \
             .orderBy(col(FOD.NUMBER_OF_PLAYERS_ON_LOAN).desc())
         df5.show(5, False)
 
         # get top 5 countries which are having the highest number of clubs
+        print("get top 5 countries which are having the highest number of clubs")
         df6 = df1.join(fifa_clubs_df, [FOD.CLUB], INNER).select(FOD.CLUB, FC.COUNTRY) \
             .groupBy(FC.COUNTRY) \
             .agg(count(FOD.CLUB).alias(CNT)).orderBy(col(CNT).desc()).limit(5)
